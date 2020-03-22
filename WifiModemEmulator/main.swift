@@ -8,6 +8,16 @@
 
 import Foundation
 
+let serial = Serial()
+let display = Display()
+
+let modemWifi = WifiModemEmulator(virtualSerial: serial, virtualDisplay: display)
+
+modemWifi.loop()
+
+
+
+
 
 
 

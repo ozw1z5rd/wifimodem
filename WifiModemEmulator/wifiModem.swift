@@ -7,10 +7,17 @@
 //
 
 import Foundation
-
+import os
 
 enum ledName : String  {
-    case TX, RX, CONNECTED, RI
+    case TX="TX"
+    case RX="RX"
+    case CONNECTED="CONNECTED"
+    case CD="CD"
+    case RI="RI"
+    case FLOWCTRL_SOFT="XONXOFF"
+    case FLOWCTRL_HARD="CTSRTS"
+    case READY="READY"
 }
 
 enum ledStatus : String {
@@ -18,42 +25,58 @@ enum ledStatus : String {
 }
 
 enum message : String {
-    case OK = "OK\n", ERROR = "ERROR/n"
+    case OK = "OK\n"
+    case ERROR = "ERROR/n"
 }
 
 class WifiModemEmulator {
+    
     let serial: Serial
     let display: Display
     let connection: Connection
-    var cmdMode: Bool
+    
     var polarity: Serial.Polarity = Serial.Polarity.NORMAL
-    var flowControl: Serial.flowControl
+    var flowControl: Serial.flowControl = Serial.flowControl.NONE
+    
     var verbosity: Bool = false
     var telnet: Bool = false
-    var echo: Bool = false
-    
-    var atCommand: String
-    var echoActive: Bool
+    var cmdMode: Bool = false
+    var atCommand: String = ""
+    var echoActive: Bool = true
     let ATCMD_MAX_LENGTH = 128
     let ATCMD_ESCAPE_SEQ = "+++"
     
     let MESSAGE_HELP = ""
     
+    func initializeLeds() {
+        self.led(name: ledName.CD, status: ledStatus.OFF)
+        self.led(name: ledName.CONNECTED, status: ledStatus.OFF)
+        self.led(name: ledName.FLOWCTRL_HARD, status: ledStatus.OFF)
+        self.led(name: ledName.FLOWCTRL_SOFT, status: ledStatus.OFF)
+        self.led(name: ledName.READY, status: ledStatus.ON)
+        self.led(name: ledName.RI, status: ledStatus.OFF)
+        self.led(name: ledName.RX, status: ledStatus.OFF)
+        self.led(name: ledName.TX, status: ledStatus.OFF)
+    }
+    
     init(virtualSerial: Serial, virtualDisplay: Display) {
-        self.serial = Serial()
-        self.display = Display()
-        self.cmdMode = false
-        self.atCommand = ""
-        self.echoActive = true
-        self.flowControl = Serial.flowControl.NONE
+        os_log("Initializing serial")
+        self.serial = virtualSerial
+        os_log("inizializing display")
+        self.display = virtualDisplay
+        os_log("initializing connection")
         self.connection = Connection()
+        os_log("initializing leds")
+        self.initializeLeds()
+        os_log("init terminated")
     }
     
     func led(name: ledName, status: ledStatus) {
-        print("Setting \(name) to \(status)")
+        os_log("%@ => %@", name.rawValue, status.rawValue)
     }
     
     func updateDisplay() {
+        os_log("test")
         self.display.visualize(textContent: "Nothing to display")
     }
     
@@ -86,14 +109,15 @@ class WifiModemEmulator {
     }
     
     func reply(message: message) {
-        
+        os_log("Sending back:%@", message.rawValue)
     }
     
     func setCarrier(_ x: Any ) {
         
     }
+    
     func processATCommand() {
-        self.atCommand.trimmingCharacters(in: .newlines)
+        self.atCommand = self.atCommand.trimmingCharacters(in: .newlines)
         if self.atCommand == ""  {
             return
         }
@@ -137,15 +161,15 @@ class WifiModemEmulator {
             
         case "ATE?", "ATE0", "ATE1":
             if upCmd.contains("?") {
-                self.serial.putChars(String(self.echo))
+                self.serial.putChars("TODO")
                 self.reply(message: message.OK)
             }
             else if upCmd.contains("0") {
-                self.echo = false
+                self.echoActive = false
                 self.reply(message: message.OK)
                 
             } else  {
-                self.echo = true
+                self.echoActive = true
                 self.reply(message: message.OK)
             }
         
@@ -186,18 +210,15 @@ class WifiModemEmulator {
                 self.reply(message: message.OK)
             }
             else if upCmd.contains("0") {
-                self.flowControl = Serial.flowControl.NONE
-                self.serial.setFlowControl(mode: Serial.flowControl.NONE)
+                self.flowControl = self.serial.setFlowControl(mode: Serial.flowControl.NONE)
                 self.reply(message: message.OK)
             }
             else if upCmd.contains("1") {
-                self.flowControl = Serial.flowControl.SOFTWARE
-                self.serial.setFlowControl(mode: Serial.flowControl.SOFTWARE)
+                self.flowControl = self.serial.setFlowControl(mode: Serial.flowControl.SOFTWARE)
                 self.reply(message: message.OK)
             }
             else if upCmd.contains("2") {
-                self.flowControl = Serial.flowControl.HARDWARE
-                self.serial.setFlowControl(mode: Serial.flowControl.HARDWARE)
+                self.flowControl = self.serial.setFlowControl(mode: Serial.flowControl.HARDWARE)
                 self.reply(message: message.OK)
             }
             
@@ -233,7 +254,7 @@ class WifiModemEmulator {
     func handleConnectedMode() {
         if self.serial.hasChars {
             self.led(name:ledName.TX, status: ledStatus.ON)
-            var ongoingData = self.serial.getAllChars()
+            let ongoingData = self.serial.getAllChars()
             if ongoingData.contains(self.ATCMD_ESCAPE_SEQ) {
                 self.cmdMode = true
             }
@@ -248,7 +269,7 @@ class WifiModemEmulator {
             self.led(name: ledName.CONNECTED, status: ledStatus.ON)
             if self.connection.hasChars {
                 self.led(name: ledName.RX, status: ledStatus.ON)
-                var incomingData = self.connection.getChar()
+                let incomingData = self.connection.getChar()
                 self.serial.putChar(incomingData)
             }
             else {

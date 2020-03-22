@@ -5,9 +5,9 @@
 //  Created by bigfoot on 22/03/2020.
 //  Copyright © 2020 AlessioPalma. All rights reserved.
 //
-
+    
 import Foundation
-
+import os
 
 class Serial {
     
@@ -26,7 +26,7 @@ class Serial {
         case B19200 = 19200
     }
     
-    enum Polarity {
+    enum Polarity: String {
         case CBM, NORMAL
     }
     
