@@ -1,5 +1,5 @@
 //
-//  main.swift
+//  Display.swift
 //  WifiModemEmulator
 //
 //  Created by bigfoot on 22/03/2020.
@@ -8,7 +8,10 @@
 
 import Foundation
 
+class Display {
 
-
-
+    func visualize(textContent: String) {
+        
+    }
+}
 

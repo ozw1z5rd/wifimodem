@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		A2715E102427C59E00740CDD /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2715E0F2427C59E00740CDD /* main.swift */; };
+		A2715E172427C62400740CDD /* serial.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2715E162427C62400740CDD /* serial.swift */; };
+		A2715E192427C63100740CDD /* display.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2715E182427C63100740CDD /* display.swift */; };
+		A2715E1B2427C7DA00740CDD /* wifiModem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2715E1A2427C7DA00740CDD /* wifiModem.swift */; };
+		A2715E1D2427D49D00740CDD /* connection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2715E1C2427D49D00740CDD /* connection.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +29,10 @@
 /* Begin PBXFileReference section */
 		A2715E0C2427C59E00740CDD /* WifiModemEmulator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = WifiModemEmulator; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2715E0F2427C59E00740CDD /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		A2715E162427C62400740CDD /* serial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = serial.swift; sourceTree = "<group>"; };
+		A2715E182427C63100740CDD /* display.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = display.swift; sourceTree = "<group>"; };
+		A2715E1A2427C7DA00740CDD /* wifiModem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = wifiModem.swift; sourceTree = "<group>"; };
+		A2715E1C2427D49D00740CDD /* connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = connection.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +66,10 @@
 			isa = PBXGroup;
 			children = (
 				A2715E0F2427C59E00740CDD /* main.swift */,
+				A2715E162427C62400740CDD /* serial.swift */,
+				A2715E182427C63100740CDD /* display.swift */,
+				A2715E1A2427C7DA00740CDD /* wifiModem.swift */,
+				A2715E1C2427D49D00740CDD /* connection.swift */,
 			);
 			path = WifiModemEmulator;
 			sourceTree = "<group>";
@@ -121,6 +133,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				A2715E102427C59E00740CDD /* main.swift in Sources */,
+				A2715E192427C63100740CDD /* display.swift in Sources */,
+				A2715E1D2427D49D00740CDD /* connection.swift in Sources */,
+				A2715E172427C62400740CDD /* serial.swift in Sources */,
+				A2715E1B2427C7DA00740CDD /* wifiModem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -243,10 +259,12 @@
 		A2715E142427C59E00740CDD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 3SAB6NU75R;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -254,10 +272,12 @@
 		A2715E152427C59E00740CDD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 3SAB6NU75R;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
