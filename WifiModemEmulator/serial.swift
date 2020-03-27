@@ -67,6 +67,10 @@ class Serial {
     func setPolarity(mode: Polarity) {
         
     }
+    func getBaudRateAsString() -> BaudRate {
+        return Serial.BaudRate(rawValue: 300)!
+    }
+    
     init() {
         self._hasChar = 0
         self._baudRate = BaudRate.B300

@@ -43,6 +43,8 @@ class WifiModemEmulator {
     var cmdMode: Bool = false
     var atCommand: String = ""
     var echoActive: Bool = true
+    var autoAnswer: Bool = false
+    
     let ATCMD_MAX_LENGTH = 128
     let ATCMD_ESCAPE_SEQ = "+++"
     
@@ -77,7 +79,11 @@ class WifiModemEmulator {
     
     func updateDisplay() {
         os_log("test")
-        self.display.visualize(textContent: "Nothing to display")
+        let message = """
+            flow mode \(self.flowControl)
+            Polarity \(self.polarity)
+        """
+        self.display.visualize(textContent: message)
     }
     
     func handleFlowControl() {
@@ -221,10 +227,80 @@ class WifiModemEmulator {
                 self.flowControl = self.serial.setFlowControl(mode: Serial.flowControl.HARDWARE)
                 self.reply(message: message.OK)
             }
+        case "AT$SB=300", "AT$SB=1200", "AT$SB=2400", "AT$SB=4800", "AT$SB=9600", "AT$SB=19200",
+             "AT$SB=38400":
+            let pos = upCmd.firstIndex(of: "=")
+            // TODO: be sure that the baud rate value is correct
+            let baudRate = Int(upCmd[upCmd.index(pos!, offsetBy: 1)...])
+            self.serial.setBaudRate(rate: (Serial.BaudRate( rawValue: baudRate!)! ))
             
+        case "AT$SB?":
+            self.serial.putChars(String(self.serial.getBaudRateAsString().rawValue))
+            
+        case "AT$MB?":
+            // TODO
+            self.serial.putChars("busyMsg")
+            self.reply(message: message.OK)
+            
+        case "ATI", "ATI0", "ATI1":
+            self.serial.putChars(self.networkStatus())
+            // TODO update display with the newtorn status
+            self.reply(message: message.OK)
+            
+        case "AT&V":
+            self.serial.putChars(self.currentSettings())
+            self.serial.putChars(self.storedSetting())
+            self.reply(message: message.OK)
+        
+        case "AT&W":
+            self.saveSettings()
+            self.reply(message: message.OK)
+        
+        case "AT$SSID?":
+            self.serial.putChars(self.connection.getSSID())
+            // todo
+            self.reply(message: message.OK)
+            
+        
+        case "AT&PASS?":
+            self.serial.putChars(self.connection.getPassword())
+            self.reply(message: message.OK)
+            
+        case "ATS0=0":
+            self.autoAnswer = false
+            self.reply(message: message.OK)
+            
+        case "ATS0=1":
+            self.autoAnswer = true
+            self.reply(message: message.OK)
+            
+        case "ATS0?":
+            self.serial.putChars(String(self.autoAnswer))
         default:
+            // AT&Z
+            // AT$SSID="
+            // AT$PASS=
+            //
+            
             self.reply(message: message.ERROR)
         }
+    }
+    
+    func saveSettings() {
+        
+    }
+    
+    func storedSetting() -> String {
+        return "TODO"
+    }
+    
+    func currentSettings() -> String {
+        return "TODO"
+    }
+    
+    func networkStatus() -> String {
+        // TODO
+        return "TODO"
     }
     
     func handleATMode() {

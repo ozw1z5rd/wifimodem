@@ -14,11 +14,15 @@ class Connection {
         set { }
         get { return false }
     }
-    
+    func getSSID() -> String {
+        "TODO"
+    }
     func isActive() -> Bool {
         return true
     }
-    
+    func getPassword() -> String {
+        return "*********"
+    }
     func getChar() -> Character {
         return Character(" ")
     }
