@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A2238A82242FD99C00BF11C1 /* logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2238A81242FD99C00BF11C1 /* logger.swift */; };
+		A241DB232430EB4400F6D347 /* let.swift in Sources */ = {isa = PBXBuildFile; fileRef = A241DB222430EB4400F6D347 /* let.swift */; };
 		A2715E102427C59E00740CDD /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2715E0F2427C59E00740CDD /* main.swift */; };
 		A2715E172427C62400740CDD /* serial.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2715E162427C62400740CDD /* serial.swift */; };
 		A2715E192427C63100740CDD /* display.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2715E182427C63100740CDD /* display.swift */; };
@@ -27,6 +29,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A2238A81242FD99C00BF11C1 /* logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = logger.swift; sourceTree = "<group>"; };
+		A241DB222430EB4400F6D347 /* let.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = let.swift; sourceTree = "<group>"; };
 		A2715E0C2427C59E00740CDD /* WifiModemEmulator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = WifiModemEmulator; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2715E0F2427C59E00740CDD /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		A2715E162427C62400740CDD /* serial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = serial.swift; sourceTree = "<group>"; };
@@ -70,6 +74,8 @@
 				A2715E182427C63100740CDD /* display.swift */,
 				A2715E1A2427C7DA00740CDD /* wifiModem.swift */,
 				A2715E1C2427D49D00740CDD /* connection.swift */,
+				A2238A81242FD99C00BF11C1 /* logger.swift */,
+				A241DB222430EB4400F6D347 /* let.swift */,
 			);
 			path = WifiModemEmulator;
 			sourceTree = "<group>";
@@ -136,7 +142,9 @@
 				A2715E192427C63100740CDD /* display.swift in Sources */,
 				A2715E1D2427D49D00740CDD /* connection.swift in Sources */,
 				A2715E172427C62400740CDD /* serial.swift in Sources */,
+				A241DB232430EB4400F6D347 /* let.swift in Sources */,
 				A2715E1B2427C7DA00740CDD /* wifiModem.swift in Sources */,
+				A2238A82242FD99C00BF11C1 /* logger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

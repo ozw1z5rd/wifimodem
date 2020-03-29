@@ -3,20 +3,24 @@
 //  WifiModemEmulator
 //
 //  Created by bigfoot on 22/03/2020.
-//  Copyright © 2020 AlessioPalma. All rights reserved.
+//  Copyright © 2020 Alessio Palma. All rights reserved.
 //
     
 import Foundation
-import os
 
 class Serial {
     
-    enum flowControl : Int {
-        case NONE = 0
-        case HARDWARE = 1
-        case SOFTWARE = 2
+    /// Control flow supported by the serial
+    enum FlowControl : String {
+        case NONE = "None"
+        case HARDWARE = "CTS/RTS"
+        case SOFTWARE = "XON/XOFF"
+        func asString() -> String {
+            return self.rawValue
+        }
     }
     
+    /// Allowed baud rates, 19200 is still good for zx-spectrum, commodore 64 cannot go beyond 2400
     enum BaudRate : Int {
         case B300 = 300
         case B1200 = 1200
@@ -24,58 +28,102 @@ class Serial {
         case B4800 = 4800
         case B9600 = 9600
         case B19200 = 19200
+        case B38400 = 38400
+        func asString() -> String {
+            return String(self.rawValue)
+        }
     }
     
+    /// Polarity defines which Voltage is read as 0 and which one is read as 1, this required additional hardware
+    /// on the raspberry.
     enum Polarity: String {
-        case CBM, NORMAL
+        case CBM = "CBM"
+        case NORMAL = "NORMAL"
+        func asString() -> String {
+            return self.rawValue
+        }
     }
     
-    private var _hasChar: Int
+    /// in NORMAL mode no translation is executed on incoming/outgoing bytes, if mode is CBM this modules will
+    /// execute a translation of the incoming bytes
+    enum ConversionMode: String {
+        case CBM = "CBM"
+        case NORMAL = "NORMAL"
+        func asString() -> String {
+            return self.rawValue
+        }
+    }
+    
     private var _baudRate: BaudRate
-    private var _petMode: Bool
-    private var _flowControl: flowControl
+    private var _conversionMode: ConversionMode
+    private var _flowControl: FlowControl
+    private var _polarity: Polarity
     
-    var hasChars: Bool {
-        set { }
-        get { return self._hasChar > 0}
+    var polarity: Polarity {
+        set {
+            self._polarity = newValue
+        }
+        get {
+            return self._polarity
+        }
     }
     
+    var flowControlMode: FlowControl {
+        set {
+            self._flowControl = newValue
+        }
+        get {
+            return self._flowControl
+        }
+    }
+
+    var baudRate: BaudRate {
+        set {
+            self._baudRate = newValue
+        }
+        get {
+            return self._baudRate
+        }
+    }
+    
+    var conversionMode: ConversionMode {
+        set { self._conversionMode = newValue }
+        get { return self._conversionMode }
+    }
+    
+    /// this method returns true if there are charaters available inside the serial buffer
+    func hasChars() -> Bool {
+        return true
+    }
+    
+    /// returns all the available charaters in the serial buffer as string
     func getAllChars() -> String {
         return ""
     }
     
+    /// get a single character from the serial buffer
     func getChar() -> Character {
         return Character("")
     }
-    
+
+    /// This method sends a single 8 bit char over the serial line
+    /// - Parameter char: the charater to be send over the serial line.
     func putChar(_ char: Character) {
         
     }
     
+    /// Send a string of 8 bit chars over the serial line
+    /// - Parameter chars: The string of char to be sent over the serial line
     func putChars(_ chars: String) {
         
     }
     
-    func setBaudRate(rate: BaudRate) -> BaudRate {
-        return self._baudRate
-    }
-    
-    func setFlowControl(mode: flowControl) -> flowControl {
-        return self._flowControl
-    }
-    
-    func setPolarity(mode: Polarity) {
-        
-    }
-    func getBaudRateAsString() -> BaudRate {
-        return Serial.BaudRate(rawValue: 300)!
-    }
-    
     init() {
-        self._hasChar = 0
-        self._baudRate = BaudRate.B300
-        self._petMode = false
-        self._flowControl = Serial.flowControl.NONE
+        Logger.info("Serial module is initializing")
+        self._baudRate = .B300
+        self._flowControl = .NONE
+        self._conversionMode = .NORMAL
+        self._polarity = .NORMAL
     }
 }
 
