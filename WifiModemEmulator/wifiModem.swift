@@ -383,7 +383,13 @@ class WifiModemEmulator {
                 self.cmdMode = true
             }
             if self.connection.isActive() {
-                self.connection.putChars(ongoingData)
+                do {
+                    try self.connection.putChars(ongoingData)
+                }  catch Connection.Exception.Ohoh {
+                    Logger.error("Error Writing data")
+                } catch {
+                    Logger.error("Other errors...")
+                }
             }
         }
         else {
@@ -391,7 +397,7 @@ class WifiModemEmulator {
         }
         if self.connection.isConnected() {
             self.led.write(Led.Unit.RX, Led.Status.ON)
-            if self.connection.hasChars {
+            if self.connection.hasChars() {
             
                 let incomingData = self.connection.getChar()
                 self.serial.putChar(incomingData)
