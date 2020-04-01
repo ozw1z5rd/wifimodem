@@ -98,14 +98,19 @@ class Connection {
         return OK
     }
     
-    /// If there are chars avaialable inside the TCP/IP buffer returns True.
+    /// If there are chars avaialable  returns true.
     /// - Returns: true when the socket has data
     func hasChars() -> Bool {
-        return false
-    }
-    
-    func bufferContainsChars() -> Bool {
-        return false
+        do {
+            _ = try getCharsFromInternalBuffer(size: 0)
+        }
+        catch Exception.Ohoh {
+            Logger.error("Cannot read the data")
+        }
+        catch {
+            Logger.error("oh oh...")
+        }
+        return internalBuffer.count > 0
     }
     
     func getSSID() -> String {
@@ -119,37 +124,69 @@ class Connection {
         return "*********"
     }
     
-    func getCharFromInternalBuffer(size: Int = 0) -> String {
-        if size == 0 {
-            return ""
-        }
-        // don't fill to much the internal buffer
-        if self.internalBuffer.count < size {
+    /// Get upto "size" chars from the internal buffer, when it gets empty it is filled again from the socket buffer. The code attemps always to read 1K bytes from the
+    /// socket, the data read are moved into the internal buffer where are left for later usage.
+    /// - Parameter size: how many chars get from the internal buffer
+    /// - Returns: a string composed upto "size" chars. How many chars are returned depend on the socket's buffer data availability
+    func getCharsFromInternalBuffer(size: Int = 0) throws -> String {
+        // If the availability is less than the request, try to get more data from the socket's buffer
+        if internalBuffer.count == 0 || internalBuffer.count < size {
             let n = read(self.socket_fd, self.buffer, Int(self.bufferSize))
             if n > 0 {
                 let s = String(bytesNoCopy: self.buffer, length: size, encoding: String.Encoding.ascii, freeWhenDone: false)
                 self.internalBuffer += s!
             }
+            if n < 0 && errno != EAGAIN {
+                throw Exception.Ohoh
+            }
+        }
+        // return nothing, if the called uses size 0 is to fill the internal buffer from the socket's buffer
+        // without char removal.
+        if size == 0 {
+            return ""
         }
         if self.internalBuffer.count <= size {
             return self.internalBuffer
         }
-        let strIndx = self.internalBuffer.index(self.internalBuffer.startIndex, offsetBy: size)
-        //TODO adesso deve prendere size caratteri dal buffer interno ed
-        //     accorciare quest'ultimo.
-        return self.internalBuffer
+        
+        // gets the requested chars and removes them from the internal buffer
+        let requestedData = String(internalBuffer.prefix(size))
+        let range = internalBuffer.index(internalBuffer.startIndex, offsetBy: size)..<internalBuffer.endIndex
+        internalBuffer = String(internalBuffer[range])
+        return requestedData
     }
     
     /// Get a single char from the Socket, if no data is available this function will wait for it
     /// - Returns: a single char
     func getChar() -> Character {
-        return Character(" ")
+        var c:Character = Character("")
+        do {
+            // 😮 wow...
+            c = Character(String(try getCharsFromInternalBuffer(size: 1).prefix(1)))
+        }
+        catch Exception.Ohoh {
+            Logger.error("Cannot read data")
+        }
+        catch {
+            Logger.error("Even worse..")
+        }
+        return c
     }
     
     /// Get all the available chars from the current Socket, this function will block if no data is available
     /// - Returns: return all the available chars in the Socket
     func getAllChars() -> String {
-        return "take all the data from the internal buffer"
+        var s:String = ""
+        do {
+            s = try getCharsFromInternalBuffer(size: internalBuffer.count)
+        }
+        catch Exception.Ohoh {
+            Logger.error("Cannot read data")
+        }
+        catch {
+            Logger.error("Even worse...")
+        }
+        return s
     }
     
     func isConnected() -> Bool {
