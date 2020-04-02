@@ -15,12 +15,15 @@ class Logger {
         print("wifimodem - \(msg)")
     }
     static func info(_ msg: String) {
-        Logger.println(msg)
+        Logger.println("INFO \t" + msg)
     }
     static func error(_ msg: String) {
-        Logger.println(msg)
+        Logger.println("ERROR \t" + msg)
     }
     static func warn(_ msg: String){
-        Logger.println(msg)
+        Logger.println("WARN \t" + msg)
+    }
+    static func debug(_ msg: String){
+        Logger.println("DEBUG \t" + msg)
     }
 }

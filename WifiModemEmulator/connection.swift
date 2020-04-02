@@ -19,25 +19,16 @@ class Connection {
     }
     
     private var socket_fd: Int32 = -1
-    private var _port: UInt16 = 0
+    private var port: UInt16 = 0
     private var address4: String = "localhost"
     private let buffer: UnsafeMutableRawPointer
     private var connected: Bool = false
     private var bufferSize: Int = 0
     private var internalBuffer: String = ""
     
-    var port: UInt16 {
-        get {
-            return self._port
-        }
-        set {
-            self._port = newValue
-        }
-    }
-    
     init(address: String = "localhost", port: UInt16 = 6510, bufferSz: Int = 1024) {
         self.address4 = address
-        self._port = port
+        self.port = port
         self.buffer = UnsafeMutableRawPointer.allocate(byteCount: bufferSz, alignment: 1)
         self.bufferSize = bufferSz
         bzero(self.buffer, bufferSz - 1)
@@ -50,47 +41,56 @@ class Connection {
         self.buffer.deallocate()
     }
     
-    func connect() -> Bool {
-        Logger.info("Starting Listening TCP connection to \(self.address4):\(self.port)")
+    func waitCall() {
+            //        if listen(self.socket_fd, 5) == -1 {
+        //            Logger.debug("Cannot start listening")
+        //            return KO
+        //        }
+                
+        //        Logger.debug("Started listening")
+        //        var client_addr = sockaddr_storage()
+        //        var client_addr_len = socklen_t(MemoryLayout.size(ofValue: client_addr))
+        //        let client_fd = withUnsafeMutablePointer(to: &client_addr) {
+        //            accept(self.socket_fd, UnsafeMutableRawPointer($0).assumingMemoryBound(to: sockaddr.self), &client_addr_len)
+        //        }
+        //
+        //        if client_fd == -1 {
+        //            Logger.error("Cannot accept connection")
+        //            return KO
+        //        }
+        //        Logger.debug("Can accept connections")
+        //        // no blocking read
+    }
+    
+    func call() -> Bool {
+        Logger.debug("Attempt to TCP-connect to \(self.address4):\(self.port)")
         self.socket_fd = socket(AF_INET, SOCK_STREAM, 0)
         if self.socket_fd == -1 {
             Logger.error("Cannot create a socket_fd!")
             return KO
         }
+        Logger.debug("Socket descriptor created")
         var sock_opt_on = Int32(1)
+        
         setsockopt(self.socket_fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt_on, socklen_t(MemoryLayout.size(ofValue: sock_opt_on)))
         var server_addr = sockaddr_in()
         let server_addr_size = socklen_t(MemoryLayout.size(ofValue: server_addr))
         server_addr.sin_len=UInt8(server_addr_size)
         server_addr.sin_family = sa_family_t(AF_INET) // IPV4
         server_addr.sin_port = UInt16(self.port).bigEndian
-        
-        let bind_server = withUnsafePointer(to: &server_addr) {
-            bind(self.socket_fd, UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self), server_addr_size)
+    
+        var rc = withUnsafePointer(to: &server_addr) {
+            connect(self.socket_fd, UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self), server_addr_size)
         }
-        if bind_server == 1 {
-            Logger.error("Cannot Bind port \(self.port)")
+   
+        if rc < 0 {
+            Logger.error("Cannot connect \(self.port) error code is \(errno)")
             return KO
         }
+        Logger.info("Connected ok")
         
-        if listen(self.socket_fd, 5) == -1 {
-            Logger.error("Cannot start listening")
-            return KO
-        }
-
-        var client_addr = sockaddr_storage()
-        var client_addr_len = socklen_t(MemoryLayout.size(ofValue: client_addr))
-        let client_fd = withUnsafeMutablePointer(to: &client_addr) {
-            accept(self.socket_fd, UnsafeMutableRawPointer($0).assumingMemoryBound(to: sockaddr.self), &client_addr_len)
-        }
-        if client_fd == -1 {
-            Logger.error("Cannot accept connection")
-            return KO
-        }
-        
-        // no blocking read
         let flags: Int32 = fcntl(self.socket_fd, F_GETFL)
-        let rc = fcntl(self.socket_fd, F_SETFL, flags | O_NONBLOCK )
+        rc = fcntl(self.socket_fd, F_SETFL, flags | O_NONBLOCK )
         if rc < 0 {
             Logger.error("Cannot set no blocking on socket")
         }
@@ -116,6 +116,7 @@ class Connection {
     func getSSID() -> String {
         return "TODO"
     }
+    
     func isActive() -> Bool {
         return true
     }
@@ -130,13 +131,14 @@ class Connection {
     /// - Returns: a string composed upto "size" chars. How many chars are returned depend on the socket's buffer data availability
     func getCharsFromInternalBuffer(size: Int = 0) throws -> String {
         // If the availability is less than the request, try to get more data from the socket's buffer
-        if internalBuffer.count == 0 || internalBuffer.count < size {
+        if (internalBuffer.count == 0) || (internalBuffer.count < size) || (size == -1) {
             let n = read(self.socket_fd, self.buffer, Int(self.bufferSize))
             if n > 0 {
-                let s = String(bytesNoCopy: self.buffer, length: size, encoding: String.Encoding.ascii, freeWhenDone: false)
+                Logger.debug("\(n) bytes read")
+                let s = String(bytesNoCopy: self.buffer, length: n, encoding: String.Encoding.ascii, freeWhenDone: false)
                 self.internalBuffer += s!
             }
-            if n < 0 && errno != EAGAIN {
+            if (n < 0) && (errno != EAGAIN) {
                 throw Exception.Ohoh
             }
         }
@@ -145,8 +147,10 @@ class Connection {
         if size == 0 {
             return ""
         }
-        if self.internalBuffer.count <= size {
-            return self.internalBuffer
+        if (self.internalBuffer.count <= size) || (size == -1) {
+            let data = self.internalBuffer
+            self.internalBuffer = ""
+            return data
         }
         
         // gets the requested chars and removes them from the internal buffer
@@ -162,7 +166,11 @@ class Connection {
         var c:Character = Character("")
         do {
             // 😮 wow...
-            c = Character(String(try getCharsFromInternalBuffer(size: 1).prefix(1)))
+            let s = try getCharsFromInternalBuffer(size: 1)
+            if s.count > 0 {
+                let t = s.prefix(1)
+                c = Character(String(t))
+            }
         }
         catch Exception.Ohoh {
             Logger.error("Cannot read data")
@@ -178,7 +186,7 @@ class Connection {
     func getAllChars() -> String {
         var s:String = ""
         do {
-            s = try getCharsFromInternalBuffer(size: internalBuffer.count)
+            s = try getCharsFromInternalBuffer(size: -1)
         }
         catch Exception.Ohoh {
             Logger.error("Cannot read data")
