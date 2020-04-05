@@ -61,6 +61,27 @@ class Connection {
         //        Logger.debug("Can accept connections")
         //        // no blocking read
     }
+    private func hostToIpAddress(_ hostname: String) -> [String] {
+        var ipList: [String] = []
+        guard let host = hostname.withCString({gethostbyname($0)}) else {
+            return ipList
+        }
+        guard host.pointee.h_length > 0 else {
+            return ipList
+        }
+
+        var index = 0
+        while host.pointee.h_addr_list[index] != nil {
+            var addr: in_addr = in_addr()
+            memcpy(&addr.s_addr, host.pointee.h_addr_list[index], Int(host.pointee.h_length))
+            guard let remoteIPAsC = inet_ntoa(addr) else {
+                return ipList
+            }
+            ipList.append(String.init(cString: remoteIPAsC))
+            index += 1
+        }
+        return ipList
+    }
     
     func call() -> Bool {
         Logger.debug("Attempt to TCP-connect to \(self.address4):\(self.port)")
@@ -73,12 +94,18 @@ class Connection {
         var sock_opt_on = Int32(1)
         
         setsockopt(self.socket_fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt_on, socklen_t(MemoryLayout.size(ofValue: sock_opt_on)))
+        
+        let remote_addr = self.hostToIpAddress(self.address4)[0]
+        Logger.info("Remote IP is \(remote_addr) I will use only the first")
+        
         var server_addr = sockaddr_in()
         let server_addr_size = socklen_t(MemoryLayout.size(ofValue: server_addr))
         server_addr.sin_len=UInt8(server_addr_size)
         server_addr.sin_family = sa_family_t(AF_INET) // IPV4
         server_addr.sin_port = UInt16(self.port).bigEndian
-    
+        server_addr.sin_addr = remote_addr.withCString({
+             in_addr(s_addr: inet_addr($0))
+        })
         var rc = withUnsafePointer(to: &server_addr) {
             connect(self.socket_fd, UnsafeRawPointer($0).assumingMemoryBound(to: sockaddr.self), server_addr_size)
         }

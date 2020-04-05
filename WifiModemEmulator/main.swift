@@ -17,7 +17,7 @@ import Foundation
 // modemWifi.loop()
 
 Logger.info("Starting...")
-let c = Connection(address: "0.0.0.0", port: 64738, bufferSz: 512)
+let c = Connection(address: "bbs.retroacademy.it", port: 6510, bufferSz: 512)
 Logger.info("After connection init")
 if c.call() {
     Logger.info("Connection OK!")
