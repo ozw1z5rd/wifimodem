@@ -382,7 +382,7 @@ class WifiModemEmulator {
             if ongoingData.contains(self.ATCMD_ESCAPE_SEQ) {
                 self.cmdMode = true
             }
-            if self.connection.isActive() {
+            if self.connection.isConnected() {
                 do {
                     try self.connection.putChars(ongoingData)
                 }  catch Connection.Exception.Ohoh {

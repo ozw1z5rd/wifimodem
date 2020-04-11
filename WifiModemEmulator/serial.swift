@@ -103,7 +103,7 @@ class Serial {
     
     /// get a single character from the serial buffer
     func getChar() -> Character {
-        return Character("")
+        return Character("\u{00}")
     }
 
     /// This method sends a single 8 bit char over the serial line
