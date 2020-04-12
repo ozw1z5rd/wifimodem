@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import os
 
 class WifiModemEmulator {
     
@@ -88,7 +87,7 @@ class WifiModemEmulator {
     }
     
     func reply(message: message) {
-        os_log("Sending back:%@", message.rawValue)
+        Logger.info("Sending back \(message)")
     }
     
     func setCarrier(_ x: Any ) {

@@ -45,43 +45,31 @@ class Connection {
         self.buffer.deallocate()
     }
     
-    func waitCall() {
-            //        if listen(self.socket_fd, 5) == -1 {
-        //            Logger.debug("Cannot start listening")
-        //            return KO
-        //        }
-                
-        //        Logger.debug("Started listening")
-        //        var client_addr = sockaddr_storage()
-        //        var client_addr_len = socklen_t(MemoryLayout.size(ofValue: client_addr))
-        //        let client_fd = withUnsafeMutablePointer(to: &client_addr) {
-        //            accept(self.socket_fd, UnsafeMutableRawPointer($0).assumingMemoryBound(to: sockaddr.self), &client_addr_len)
-        //        }
-        //
-        //        if client_fd == -1 {
-        //            Logger.error("Cannot accept connection")
-        //            return KO
-        //        }
-        //        Logger.debug("Can accept connections")
-        //        // no blocking read
+    /// This function is required when the computer waits for incoming connection, at the montent is not implemented
+    func waitCall() throws {
+        throw Exception.UnImplemented
     }
     
     /// Convert an hostname into a list of ip addresses
     ///
     /// - Parameter hostname: hostname
-    /// - Returns: a list of ip addresses as strings.
+    /// - Returns: a list of ip addresses as strings or empty list if no resolution was possible
     private func hostToIpAddress(_ hostname: String) -> [String] {
         var ipList: [String] = []
-        guard let host = hostname.withCString({gethostbyname($0)}) else {
+        guard let host = hostname.withCString({
+            gethostbyname($0)
+        }) else {
             return ipList
         }
+        // no ip addresses found
         guard host.pointee.h_length > 0 else {
             return ipList
         }
         var index = 0
         while host.pointee.h_addr_list[index] != nil {
             var addr: in_addr = in_addr()
-            memcpy(&addr.s_addr, host.pointee.h_addr_list[index], Int(host.pointee.h_length))
+            // ! is required to compile this under linux on raspberry
+            memcpy(&addr.s_addr, host.pointee.h_addr_list[index]!, Int(host.pointee.h_length))
             guard let remoteIPAsC = inet_ntoa(addr) else {
                 return ipList
             }
@@ -99,22 +87,34 @@ class Connection {
     
     func call() -> Bool {
         Logger.debug("Attempt to TCP-connect to \(self.hostName):\(self.port)")
+        // https://lists.swift.org/pipermail/swift-dev/Week-of-Mon-20160215/001112.html
+#if RASPBERRY
+        // print(SOCK_STREAM) --> __socket_type(rawValue: 1)
+        self.socket_fd = socket(AF_INET, Int32(1), 0)
+#else
         self.socket_fd = socket(AF_INET, SOCK_STREAM, 0)
+#endif
         guard self.socket_fd != -1 else {
             Logger.error("Cannot create a socket_fd!")
             return KO
         }
         Logger.debug("Socket descriptor created")
+        //HACK -
         var sock_opt_on = Int32(1)
         
         setsockopt(self.socket_fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt_on, socklen_t(MemoryLayout.size(ofValue: sock_opt_on)))
         
-        let remote_addr = self.hostToIpAddress(self.hostName)[0]
-        Logger.info("Remote IP is \(remote_addr) I will use only the first")
+        let remote_addresses = self.hostToIpAddress(self.hostName)
+        let remote_addr = remote_addresses[0]
+        Logger.info("Found \(remote_addresses.count) addresses, using the 1st - Remote IP is \(remote_addr) I will use only the first")
         
         var server_addr = sockaddr_in()
         let server_addr_size = socklen_t(MemoryLayout.size(ofValue: server_addr))
-        server_addr.sin_len=UInt8(server_addr_size)
+#if RASPBERRY
+        Logger.info("Code compiled for raspberry, no sin_len in address structure")
+#else
+        server_addr.sin_len = UInt8(server_addr_size)
+#endif
         server_addr.sin_family = sa_family_t(AF_INET) // IPV4
         server_addr.sin_port = UInt16(self.port).bigEndian
         server_addr.sin_addr = remote_addr.withCString({
@@ -132,7 +132,6 @@ class Connection {
         Logger.info("Connected ok")
         
         let flags: Int32 = fcntl(self.socket_fd, F_GETFL)
-        
         rc = fcntl(self.socket_fd, F_SETFL, flags | O_NONBLOCK )
         
         guard rc >= 0 else {
