@@ -150,11 +150,9 @@ class Connection {
     func hasChars() -> Bool {
         do {
             _ = try getCharsFromInternalBuffer(size: 0)
-        }
-        catch Exception.Ohoh {
+        } catch Exception.Ohoh {
             Logger.error("Cannot read the data")
-        }
-        catch {
+        } catch {
             Logger.error("oh oh...")
         }
         return internalBuffer.count > 0

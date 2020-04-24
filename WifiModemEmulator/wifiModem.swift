@@ -95,6 +95,26 @@ class WifiModemEmulator {
         
     }
     
+    func writeToSerial(_ text: String) -> Bool {
+        do {
+            try self.serial.putChars(text)
+            return true
+        } catch Serial.Exception.CANT_WRITE {
+            Logger.error("Cannot write on serial")
+        } catch {
+            Logger.error("Serial issue when writing on serial")
+        }
+        return false
+    }
+    
+    func modemReply(_ text: String) {
+        if self.writeToSerial(text) {
+            self.reply(message: message.OK)
+        } else {
+            self.reply(message: message.ERROR)
+        }
+    }
+    
     func processATCommand() {
         self.atCommand = self.atCommand.trimmingCharacters(in: .newlines)
         if self.atCommand == ""  {
@@ -114,17 +134,15 @@ class WifiModemEmulator {
             self.reply(message: message.OK)
             
         case "ATNET?":
-            self.serial.putChars(String(self.telnet))
-            self.reply(message: message.OK)
-            
+            self.modemReply(String(self.telnet))
+                        
         case "ATA":
             if self.connection.hasClient() {
                 self.answerCall()
             }
     
         case "AT?":
-            self.serial.putChars(self.MESSAGE_HELP)
-            self.reply(message: message.OK)
+            self.modemReply(self.MESSAGE_HELP)
             
         case "ATZ":
             self.readSettings()
@@ -140,8 +158,7 @@ class WifiModemEmulator {
             
         case "ATE?", "ATE0", "ATE1":
             if upCmd.contains("?") {
-                self.serial.putChars("TODO")
-                self.reply(message: message.OK)
+                self.modemReply("TODO")
             }
             else if upCmd.contains("0") {
                 self.echoActive = false
@@ -154,8 +171,7 @@ class WifiModemEmulator {
         
         case "ATV?", "ATV0", "ATV1":
             if upCmd.contains("?") {
-                self.serial.putChars(String(self.verbosity))
-                self.reply(message: message.OK)
+                self.modemReply(String(self.verbosity))
             }
             else if upCmd.contains("0") {
                 self.verbosity = false
@@ -168,8 +184,7 @@ class WifiModemEmulator {
             
         case "AT&P?", "AT&P0", "AT&P1":
             if upCmd.contains("?") {
-                self.serial.putChars("TODO")
-                self.reply(message: message.OK)
+                self.modemReply("TODO")
             }
             else if upCmd.contains("0") {
                 self.serial.polarity = Serial.Polarity.CBM
@@ -183,7 +198,7 @@ class WifiModemEmulator {
         
         case "AT&K", "AT&K0", "AT&K1", "AT&K2":
             if upCmd.contains("?") {
-                self.serial.putChars("TODO")
+                self.modemReply("TODO")
                 self.reply(message: message.OK)
             }
             else if upCmd.contains("0") {
@@ -208,36 +223,30 @@ class WifiModemEmulator {
             self.serial.baudRate = Serial.BaudRate(rawValue: baudRate!)!
             
         case "AT$SB?":
-            self.serial.putChars(String(self.serial.baudRate.asString()))
+            self.modemReply(String(self.serial.baudRate.asString()))
             
         case "AT$MB?":
             // TODO
-            self.serial.putChars("busyMsg")
-            self.reply(message: message.OK)
+            self.modemReply("busyMsg")
             
         case "ATI", "ATI0", "ATI1":
-            self.serial.putChars(self.networkStatus())
+            self.modemReply(self.networkStatus())
             // TODO update display with the newtorn status
-            self.reply(message: message.OK)
             
         case "AT&V":
-            self.serial.putChars(self.currentSettings())
-            self.serial.putChars(self.storedSetting())
-            self.reply(message: message.OK)
+            self.modemReply("\(self.currentSettings())\n\(self.storedSetting())")
         
         case "AT&W":
             self.saveSettings()
             self.reply(message: message.OK)
         
         case "AT$SSID?":
-            self.serial.putChars(self.connection.getSSID())
+            self.modemReply(self.connection.getSSID())
             // todo
-            self.reply(message: message.OK)
             
         
         case "AT&PASS?":
-            self.serial.putChars(self.connection.getPassword())
-            self.reply(message: message.OK)
+            self.modemReply(self.connection.getPassword())
             
         case "AT&F":
             self.resetSettingsToDefaults()
@@ -252,8 +261,7 @@ class WifiModemEmulator {
             self.reply(message: message.OK)
             
         case "ATS0?":
-            self.serial.putChars(String(self.autoAnswer))
-            self.reply(message: message.OK)
+            self.modemReply(String(self.autoAnswer))
             
         case "ATPET=1":
             self.petMode = true
@@ -264,8 +272,7 @@ class WifiModemEmulator {
             self.reply(message: message.OK)
             
         case "ATPET?":
-            self.serial.putChars(String(self.petMode))
-            self.reply(message: message.OK)
+            self.modemReply(String(self.petMode))
         
         case "ATHEX=0":
             self.hexMode = false
@@ -276,8 +283,7 @@ class WifiModemEmulator {
             self.reply(message: message.OK)
             
         case "ATHEX?":
-            self.serial.putChars(String(self.hexMode))
-            self.reply(message: message.OK)
+            self.modemReply(String(self.hexMode))
             
         case "ATH":
             self.reply(message: message.OK)
@@ -292,8 +298,7 @@ class WifiModemEmulator {
             self.reply(message: message.OK)
             
         case "ATIP?":
-            self.serial.putChars(self.connection.getIpAddress())
-            self.reply(message: message.OK)
+            self.modemReply(self.connection.getIpAddress())
             
         case "AT$UPDATE":
             self.reply(message: message.UNIMPLEMENTED)
